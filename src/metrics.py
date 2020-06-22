@@ -5,10 +5,10 @@ from tqdm.notebook import tqdm
 
 class WRMSSEEvaluator(object):
     '''
-    you can calculate score like this
+    you can calculate public lb score like bellow.
     evaluator = WRMSSEEvaluator(train, valid, calendar, prices)
     _, scores = evaluator.score(valid_preds)
-    lb_score = np.mead(scores)
+    lb_score = np.mean(scores)
     print(lb_score)
     '''
 
