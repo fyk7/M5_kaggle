@@ -6,7 +6,7 @@ MODEL_FILE = '{0}_model.pickle'.format(MODEL_NAME)
 TEST_SIZE = 0.2
 PERCENT = 0.5
 SCALING = True
-unused = ['SK_ID_CURR', 'TARGET']
+unused = ['sales', 'TARGET']
 
 MODEL_CONFIG = {
     'LogisticRegression': {

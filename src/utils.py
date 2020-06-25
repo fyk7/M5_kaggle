@@ -5,6 +5,7 @@ import pandas as pd
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+import lightgbm as lgb
 
 def setup_logger(out_file=None, stderr=True, stderr_level=logging.INFO, file_level=logging.DEBUG):
     LOGGER = logging.getLogger()

@@ -42,7 +42,7 @@ def wrmsse(preds, y_true, score_only=False, s = S, w = W, sw=SW):
         return score, score_matrix
 
 #calcurate score from submission files
-def calc_wrmsse_v2(END_TRAIN = 1914, submission_path):
+def calc_wrmsse_v2(END_TRAIN=1914, submission_path):
     sales = pd.read_csv('../data/input/m5-forecasting-accuracy/sales_train_evaluation.csv')
     sub = pd.read_csv(submission_path)
     sub = sub[sub.id.str.endswith('validation')]
