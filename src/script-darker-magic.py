@@ -126,9 +126,20 @@ P_HORIZON   = 28                 # Prediction horizon
 ## or values not present in test set
 remove_features = ['id','state_id','store_id',
                    'date','wm_yr_wk','d',TARGET]
+'''                   
 mean_features   = ['enc_cat_id_mean','enc_cat_id_std',
                    'enc_dept_id_mean','enc_dept_id_std',
                    'enc_item_id_mean','enc_item_id_std'] 
+'''
+mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
+                'enc_store_id_std', 'enc_cat_id_mean', 'enc_cat_id_std',
+                'enc_dept_id_mean', 'enc_dept_id_std', 'enc_state_id_cat_id_mean',
+                'enc_state_id_cat_id_std', 'enc_state_id_dept_id_mean',
+                'enc_state_id_dept_id_std', 'enc_store_id_cat_id_mean',
+                'enc_store_id_cat_id_std', 'enc_store_id_dept_id_mean',
+                'enc_store_id_dept_id_std', 'enc_item_id_mean', 'enc_item_id_std',
+                'enc_item_id_state_id_mean', 'enc_item_id_state_id_std',
+                'enc_item_id_store_id_mean', 'enc_item_id_store_id_std']
 
 #PATHS for Features
 ORIGINAL = '../data/input/m5-forecasting-accuracy/'
