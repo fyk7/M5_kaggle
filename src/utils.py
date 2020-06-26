@@ -1,8 +1,9 @@
 import logging
-import sys, os, psutil
+import sys, os, psutil, random
 import numpy as np
 import pandas as pd
 import config
+from multiprocessing import Pool
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -33,6 +34,7 @@ def setup_logger(out_file=None, stderr=True, stderr_level=logging.INFO, file_lev
 
     return LOGGER
 
+######### M5 では使用しない可能性が高い ############
 class ModelFactory(object):
     def __init__(self, name, config, logger):
         logger.info('Selecting model => {0}'.format(name))
@@ -59,9 +61,12 @@ class ModelFactory(object):
         prediction = self.model.predict(X)
         return prediction
 
+
+#メモリの使用量を表示
 def get_memory_usage() -> float:
     return np.round(psutil.Process(os.getpid()).memory_info()[0]/2.**30, 2) 
         
+#メモリの使用料を見やすく表示
 def sizeof_fmt(num, suffix='B') -> str:
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
         if abs(num) < 1024.0:
