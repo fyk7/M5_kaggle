@@ -2,6 +2,7 @@ import logging
 import sys, os, psutil
 import numpy as np
 import pandas as pd
+import config
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -95,4 +96,16 @@ def reduce_mem_usage(df, verbose=True) -> pd.DataFrame:
                     df[col] = df[col].astype(np.float64)    
     end_mem = df.memory_usage().sum() / 1024**2
     if verbose: print('Mem. usage decreased to {:5.2f} Mb ({:.1f}% reduction)'.format(end_mem, 100 * (start_mem - end_mem) / start_mem))
+    return df
+
+def seed_everything(seed=0):
+    random.seed(seed)
+    np.random.seed(seed)
+
+def df_parallelize_run(func, t_split):
+    num_cores = np.min([config.N_CORES,len(t_split)])
+    pool = Pool(num_cores)
+    df = pd.concat(pool.map(func, t_split), axis=1)
+    pool.close()
+    pool.join()
     return df
