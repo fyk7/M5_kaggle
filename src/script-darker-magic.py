@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os, sys, gc, time, warnings, pickle, psutil, random
 from multiprocessing import Pool
-from utils import seed_everything, df_parallelize_run
+from utils import seed_everything, df_parallelize_run, setup_logger
 import config
 warnings.filterwarnings('ignore')
 
@@ -26,10 +26,9 @@ def get_data_by_store(store):
     df = pd.concat([df, df3], axis=1)
     del df3 # to not reach memory limit 
     
-    # Create features list
     features = [col for col in list(df) if col not in remove_features]
+
     df = df[['id','d',config.TARGET]+features]
-    # Skipping first n rows
     df = df[df['d']>=config.START_TRAIN].reset_index(drop=True)
     
     return df, features
@@ -97,11 +96,6 @@ for i in [1,7,14]:
     for j in [7,14,30,60]:
         ROLS_SPLIT.append([i,j])
 
-
-'''
-if USE_AUX:
-    lgb_params['n_estimators'] = 2
-'''    
 
 ########################### Train Models
 #################################################################################
