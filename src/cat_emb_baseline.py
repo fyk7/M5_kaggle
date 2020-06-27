@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime
 import os, sys, gc, time, warnings, pickle, psutil, random
+from tqdm import tqdm
 from multiprocessing import Pool
 from utils import setup_logger
 warnings.filterwarnings('ignore')
@@ -92,7 +93,7 @@ def make_lag_roll(LAG_DAY):
 VER = 1                          # Our model version
 SEED = 42                        # We want all things
 seed_everything(SEED)            # to be as deterministic 
-lgb_params['seed'] = SEED        # as possible
+#lgb_params['seed'] = SEED        # as possible
 N_CORES = psutil.cpu_count()     # Available CPU cores
 
 
@@ -145,7 +146,7 @@ num_cols = ['release', 'sell_price', 'price_max', 'price_min', 'price_std', 'pri
             'rolling_mean_tmp_7_7', 'rolling_mean_tmp_7_14', 'rolling_mean_tmp_7_30', 
             'rolling_mean_tmp_7_60', 'rolling_mean_tmp_14_7', 'rolling_mean_tmp_14_14', 'rolling_mean_tmp_14_30', 
             'rolling_mean_tmp_14_60']
-bool_cols = ['snap_CA', , 'snap_TX', 'snap_WI']
+bool_cols = ['snap_CA', 'snap_TX', 'snap_WI']
 dense_cols = num_cols + bool_cols
 
 
@@ -184,6 +185,7 @@ from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, concatenat
 from tensorflow.keras.models import Model
 
 #cat_emb訓練データ作成
+#辞書型にして、catとnumのカラムをmodelに教える
 #コードに問題がないことを確認したらstandard scalerを追加する。
 def make_X(df):
     X = {"dense1": df[dense_cols].to_numpy()}
@@ -243,12 +245,12 @@ def create_model(lr=0.002):
     tm_dw_emb = Flatten(Embedding(7,1)(tm_dw_input))
     tm_w_end_emb = Flatten(Embedding(2,1)(tm_w_end_input))
 
-'''nunique()の結果は以下のようになった。もし問題があれば以下の値に置換する
-event_name_1       30
-event_type_1        4
-event_name_2        4
-event_type_2        2
-'''
+    '''nunique()の結果は以下のようになった。もし問題があれば以下の値に置換する
+    event_name_1       30
+    event_type_1        4
+    event_name_2        4
+    event_type_2        2
+    '''
 
     event_name_1_emb = Flatten()(Embedding(31, 1)(event_name_1_input))
     event_type_1_emb = Flatten()(Embedding(5, 1)(event_type_1_input))
@@ -270,8 +272,8 @@ event_type_2        2
                      store_id_emb, state_id_emb])
     '''
     x = concatenate([dense_input,
-                     release_input, price_nunique_input, item_nunique_input,
-                     tm_d_input, tm_w_input, tm_m_input, tm_y_input, tm_wm_input, tm_dw_input, tm_w_end_input,
+                     release_emb, price_nunique_emb, item_nunique_emb,
+                     tm_d_emb, tm_w_emb, tm_m_emb, tm_y_emb, tm_wm_emb, tm_dw_emb, tm_w_end_emb,
                      event_name_1_emb, event_type_1_emb, 
                      event_name_2_emb, event_type_2_emb, 
                      item_id_emb, dept_id_emb, cat_id_emb])
@@ -309,7 +311,6 @@ event_type_2        2
     return model
 
 
-
 ########################### Train Models
 #################################################################################
 for store_id in STORES_IDS:
@@ -345,7 +346,7 @@ for store_id in STORES_IDS:
     y_train = grid_df[train_mask][TARGET]
     valid = (make_X(grid_df[valid_mask][features_columns]), grid_df[valid_mask][TARGET])
 
-    logger.info(f'X_train shape: {X_train.shape}')
+    logger.info(f'X_train shape: {X_train.keys()}')
     logger.info(f'y_train shape: {y_train.shape}')
 
     # Saving part of the dataset for later predictions
@@ -367,7 +368,6 @@ for store_id in STORES_IDS:
                           verbose_eval = 100,
                           )
     
-    # Save model - it's not real '.bin' but a pickle file
     model_name = 'lgb_model_'+store_id+'_v'+str(VER)+'.bin'
     pickle.dump(estimator, open(model_name, 'wb'))
     '''
@@ -375,6 +375,7 @@ for store_id in STORES_IDS:
     estimator.summary()
     logger.info(estimator.summary())
 
+    #X_trainは辞書
     history = estimator.fit(X_train, 
                     y_train,
                     batch_size=2 ** 14,
@@ -404,13 +405,14 @@ base_test = get_base_test()
 main_time = time.time()
 
 for PREDICT_DAY in range(1,29):    
-    logger.info('Predict | Day:', PREDICT_DAY)
+    logger.info(f'Predict | Day: {PREDICT_DAY}')
     start_time = time.time()
 
     # Make temporary grid to calculate rolling lags
     logger.info('start remake grid_df (for lag_roll featuers)')
     grid_df = base_test.copy()
     grid_df = pd.concat([grid_df, df_parallelize_run(make_lag_roll, ROLS_SPLIT)], axis=1)
+    #standard scalarを加えるならここに。scalar.fit(grid_df[num_cols])
     logger.info(f'test grid_df shape: {grid_df.shape}')
         
     logger.info(f'start predict for each store')
