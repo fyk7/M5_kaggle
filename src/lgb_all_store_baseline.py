@@ -52,7 +52,7 @@ def get_base_test():
 #         temp_df = pd.read_pickle('test_'+store_id+'.pkl')
 #         temp_df['store_id'] = store_id
 #         base_test = pd.concat([base_test, temp_df]).reset_index(drop=True)
-    base_test = pd.read_pickle('test_'+'.pkl')
+    base_test = pd.read_pickle('../data/output/test_'+'.pkl')
     
     return base_test
 
@@ -110,7 +110,7 @@ USE_AUX     = False
 
 #オーバーフィットしてしまう特徴量や、testで使用できない特徴量
 #この場合はstoreとstateが両方とも存在しても意味がないから
-remove_features = ['id','state_id','store_id',
+remove_features = ['id',#'state_id','store_id',
                    'date','wm_yr_wk','d',TARGET]
 '''                   
 mean_features   = ['enc_cat_id_mean','enc_cat_id_std',
@@ -184,7 +184,7 @@ estimator = lgb.train(lgb_params,
                       train_data,
                       valid_sets = [valid_data],
                       verbose_eval = 100,
-                      early_stopping_rounds=10,
+                      #early_stopping_rounds=10,
                       )
 
 
