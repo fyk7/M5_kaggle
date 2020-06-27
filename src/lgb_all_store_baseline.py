@@ -128,12 +128,12 @@ mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
                 'enc_item_id_store_id_mean', 'enc_item_id_store_id_std']
 
 #PATHS for Features
-ORIGINAL = '../input/m5-forecasting-accuracy/'
-BASE     = '../input/m5-simple-fe/grid_part_1.pkl'
-PRICE    = '../input/m5-simple-fe/grid_part_2.pkl'
-CALENDAR = '../input/m5-simple-fe/grid_part_3.pkl'
-LAGS     = '../input/m5-lags-features/lags_df_28.pkl'
-MEAN_ENC = '../input/m5-custom-features/mean_encoding_df.pkl'
+ORIGINAL = '../data/input/m5-forecasting-accuracy/'
+BASE     = '../data/input/m5-simple-fe/grid_part_1.pkl'
+PRICE    = '../data/input/m5-simple-fe/grid_part_2.pkl'
+CALENDAR = '../data/input/m5-simple-fe/grid_part_3.pkl'
+LAGS     = '../data/input/m5-lags-features/lags_df_28.pkl'
+MEAN_ENC = '../data/input/m5-custom-features/mean_encoding_df.pkl'
 
 
 # AUX(pretrained) Models paths
@@ -163,8 +163,8 @@ preds_mask = grid_df['d']>(END_TRAIN-100)#lag featureなどのために100日前
 # maskの適用とメモリ削減のためのbinary化
 train_data = lgb.Dataset(grid_df[train_mask][features_columns], 
                    label=grid_df[train_mask][TARGET])
-train_data.save_binary('train_data.bin')
-train_data = lgb.Dataset('train_data.bin')
+train_data.save_binary('../data/output/train_data.bin')
+train_data = lgb.Dataset('../data/output/train_data.bin')
 valid_data = lgb.Dataset(grid_df[valid_mask][features_columns], 
                    label=grid_df[valid_mask][TARGET])
 
@@ -174,7 +174,7 @@ grid_df = grid_df[keep_cols]
 print(grid_df.shape)
 
 #grid_df.to_pickle('test_'+store_id+'.pkl')
-grid_df.to_pickle('test_'+'.pkl')
+grid_df.to_pickle('../data/output/test_'+'.pkl')
 del grid_df
 
 
@@ -188,12 +188,12 @@ estimator = lgb.train(lgb_params,
                       )
 
 
-model_name = 'lgb_model_'+'_v'+str(VER)+'.bin'
+model_name = '../data/output/lgb_model_'+'_v'+str(VER)+'.bin'
 pickle.dump(estimator, open(model_name, 'wb'))
 
 #forループの各イテレーションでtrain_data.binを作っては削除する。
 #!rm train_data.bin
-os.remove('train_data.bin')
+os.remove('../data/output/train_data.bin')
 del train_data, valid_data, estimator
 gc.collect()
 
@@ -223,7 +223,7 @@ for PREDICT_DAY in range(1,29):
     
     grid_df = pd.concat([grid_df, df_parallelize_run(make_lag_roll, ROLS_SPLIT)], axis=1)
  
-    model_path = 'lgb_model_'+'_v'+str(VER)+'.bin'
+    model_path = '../data/output/lgb_model_'+'_v'+str(VER)+'.bin'
     estimator = pickle.load(open(model_path, 'rb'))
     day_mask = base_test['d']==(END_TRAIN+PREDICT_DAY)
     mask = day_mask
@@ -250,4 +250,4 @@ all_preds
 # _evaluationを埋めるためにfillna
 submission = pd.read_csv(ORIGINAL+'sample_submission.csv')[['id']]
 submission = submission.merge(all_preds, on=['id'], how='left').fillna(0)#evaluationをfillnaする。
-submission.to_csv('submission_v'+str(VER)+'.csv', index=False)
+submission.to_csv('../data/output/submission_v'+str(VER)+'.csv', index=False)
