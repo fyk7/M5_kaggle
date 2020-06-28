@@ -62,7 +62,7 @@ def get_base_test():
     base_test = pd.DataFrame()
 
     for store_id in STORES_IDS:
-        temp_df = pd.read_pickle('test_'+store_id+'.pkl')
+        temp_df = pd.read_pickle('../data/output/test_'+store_id+'.pkl')
         temp_df['store_id'] = store_id
         base_test = pd.concat([base_test, temp_df]).reset_index(drop=True)
     
@@ -354,7 +354,7 @@ for store_id in STORES_IDS:
     grid_df = grid_df[preds_mask].reset_index(drop=True)
     keep_cols = [col for col in list(grid_df) if '_tmp_' not in col]
     grid_df = grid_df[keep_cols]
-    grid_df.to_pickle('test_'+store_id+'.pkl')
+    grid_df.to_pickle('../data/output/test_'+store_id+'.pkl')
 
     logger.info(f'keep_cols: {keep_cols}')    
     logger.info(f'grid_df[preds_mask]: {grid_df.shape}')
@@ -384,7 +384,7 @@ for store_id in STORES_IDS:
                     shuffle=True,
                     validation_data=valid)
 
-    model_name = 'cat_emb_model_'+store_id+'_v'+str(VER)+'.h5'
+    model_name = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5'
     estimator.save(model_name)
 
     #!rm train_data.bin
@@ -421,7 +421,7 @@ for PREDICT_DAY in range(1,29):
         model_path = 'lgb_model_'+store_id+'_v'+str(VER)+'.bin' 
         estimator = pickle.load(open(model_path, 'rb'))
         '''
-        model_path = 'cat_emb_model_'+store_id+'_v'+str(VER)+'.h5' 
+        model_path = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5' 
         estimator = keras.models.load_model(model_path)
 
         day_mask = base_test['d']==(END_TRAIN+PREDICT_DAY)
@@ -454,4 +454,4 @@ all_preds
 # we need to do fillna() for "_evaluation" items
 submission = pd.read_csv(ORIGINAL+'sample_submission.csv')[['id']]
 submission = submission.merge(all_preds, on=['id'], how='left').fillna(0)
-submission.to_csv('submission_v'+str(VER)+'.csv', index=False)
+submission.to_csv('../data/output/submission_v'+str(VER)+'.csv', index=False)
