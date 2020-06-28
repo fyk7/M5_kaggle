@@ -446,10 +446,10 @@ for PREDICT_DAY in range(1,29):
         
     logger.info(f'start predict for each store')
     for store_id in STORES_IDS:
-        '''
-        model_path = 'lgb_model_'+store_id+'_v'+str(VER)+'.bin' 
-        estimator = pickle.load(open(model_path, 'rb'))
-        '''
+        #以下を記述しないと前に作成したモデルが消えない。
+        tf.keras.backend.clear_session()
+        gc.collect()
+
         model_path = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5' 
         estimator = keras.models.load_model(model_path)
 
@@ -458,7 +458,7 @@ for PREDICT_DAY in range(1,29):
         
         mask = (day_mask)&(store_mask)
         X_test = make_X(grid_df[mask][MODEL_FEATURES])
-        base_test[TARGET][mask] = estimator.predict(X_test)
+        base_test[TARGET][mask] = estimator.predict(X_test).rehsape(-1)
     
     # Make good column naming and add 
     # to all_preds DataFrame
