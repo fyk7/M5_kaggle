@@ -55,11 +55,19 @@ def get_data_by_store(store):
     df = df[['id','d',TARGET]+features]
 
     #preprocessing for cat_cols
-    for col in cat_cols:
+    #print(df.info())
+    cat_code_cols = ['item_id', 'dept_id', 'cat_id', 'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 'snap_CA', 'snap_TX', 'snap_WI']
+    for col in cat_code_cols:
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col].cat.codes)
+    cat_int_cols = ['release', 'item_nunique', 'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
+    for col in cat_int_cols:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
     
 
+    print(df.nunique())
+    print(df.info())
     df = df[df['d']>=START_TRAIN].reset_index(drop=True)
     ################################3
     #print(df.info())
@@ -136,8 +144,8 @@ cat_cols = ['release', 'price_nunique', 'item_nunique',
             'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
 
 cat_cols = cat_id_cols + cat_cols
-num_cols = ['release', 'sell_price', 'price_max', 'price_min', 'price_std', 'price_mean', 
-            'price_norm', 'price_nunique', 'item_nunique', 'price_momentum', 'price_momentum_m', 'price_momentum_y', 
+num_cols = [              'sell_price', 'price_max', 'price_min', 'price_std', 'price_mean', 
+            'price_norm', 'price_nunique',                'price_momentum', 'price_momentum_m', 'price_momentum_y', 
             #enc_ids
             'enc_cat_id_mean', 'enc_cat_id_std', 'enc_dept_id_mean', 'enc_dept_id_std', 'enc_item_id_mean', 'enc_item_id_std', 
            #sales_lag 
@@ -193,14 +201,11 @@ from tensorflow.keras.models import Model
 #辞書型にして、catとnumのカラムをmodelに教える
 #コードに問題がないことを確認したらstandard scalerを追加する。
 def make_X(df):
-    #cat_type_list = ['item_id','dept_id','cat_id','event_name_1','event_name_2','event_type_1','event_type_2']
-    #include_minus = ['event_name_1','event_name_2','event_type_1','event_type_2']
-    cat_cols = ['release', 'price_nunique', 'item_nunique', 
+    '''
+    cat_cols = ['release', 'price_nunique', 'item_nunique', 'item_id', 'dept_id', 'cat_id'
                 'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 
                 'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
-    bool_type_list = ['snap_CA', 'snap_TX', 'snap_WI']
-    for bl in bool_type_list:
-        df[bl] = df[bl].astype(np.int8)
+    '''
     X = {"dense1": df[dense_cols].to_numpy()}
     for i, v in enumerate(cat_cols):
         X[v] = df[[v]].to_numpy()
