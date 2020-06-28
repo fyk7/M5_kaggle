@@ -5,6 +5,7 @@ import os, sys, gc, time, warnings, pickle, psutil, random
 from tqdm import tqdm
 from multiprocessing import Pool
 from utils import setup_logger
+rom sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
 ########################### logger
@@ -52,10 +53,16 @@ def get_data_by_store(store):
     #remove_features==unuse_features
     features = [col for col in list(df) if col not in remove_features]
     df = df[['id','d',TARGET]+features]
+
+    #preprocessing for cat_emb cat_cols
+    for col in cat_cols:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col].cat.codes)
     
+
     df = df[df['d']>=START_TRAIN].reset_index(drop=True)
     ################################3
-    print(df.info())
+    #print(df.info())
     
     return df, features
 
@@ -190,25 +197,17 @@ from tensorflow.keras.models import Model
 #辞書型にして、catとnumのカラムをmodelに教える
 #コードに問題がないことを確認したらstandard scalerを追加する。
 def make_X(df):
-    cat_type_list = ['item_id','dept_id','cat_id']
-    include_minus = ['event_name_1','event_name_2','event_type_1','event_type_2']#,'snap_CA', 'snap_TX', 'snap_WI']
+    #cat_type_list = ['item_id','dept_id','cat_id','event_name_1','event_name_2','event_type_1','event_type_2']
+    #include_minus = ['event_name_1','event_name_2','event_type_1','event_type_2']
+    cat_cols = ['release', 'price_nunique', 'item_nunique', 
+                'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 
+                'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
     bool_type_list = ['snap_CA', 'snap_TX', 'snap_WI']
     for bl in bool_type_list:
-        df[bl] = df[bl].astype(np.int)
+        df[bl] = df[bl].astype(np.int8)
     X = {"dense1": df[dense_cols].to_numpy()}
     for i, v in enumerate(cat_cols):
-        if v in cat_type_list:
-            temp = np.asarray(df[v].cat.codes)
-            X[v] = np.expand_dims(temp, -1)
-        elif v in include_minus:
-            temp = np.asarray(df[v].cat.codes)
-            temp = temp+1
-            X[v] = np.expand_dims(temp, -1)
-        else:
-            X[v] = df[[v]].to_numpy()
-        #X[v] = np.asarray(df[[v]].cat.codes)#.astype(np.int16)
-        #temp = np.asarray(df[v].astype(np.int16))#.astype(np.int16)
-        #X[v] = np.expand_dims(temp, -1)
+        X[v] = df[[v]].to_numpy()
     return X
 
 #cat_cols = ['release', 'price_nunique', 'item_nunique', 
@@ -252,7 +251,6 @@ def create_model(lr=0.002):
     #wday_emb = Flatten()(Embedding(7, 1)(wday_input))
     #month_emb = Flatten()(Embedding(12, 1)(month_input))
     #year_emb = Flatten()(Embedding(6, 1)(year_input))
-    '''
     release_emb = Flatten()(Embedding(259,3)(release_input))
     price_nunique_emb = Flatten()(Embedding(20,1)(price_nunique_input))
     item_nunique_emb = Flatten()(Embedding(184, 3)(item_nunique_input))
@@ -274,6 +272,7 @@ def create_model(lr=0.002):
     tm_wm_emb = Flatten()(Embedding(6,1)(tm_wm_input))
     tm_dw_emb = Flatten()(Embedding(7,1)(tm_dw_input))
     tm_w_end_emb = Flatten()(Embedding(2,1)(tm_w_end_input))
+    '''
 
     '''nunique()の結果は以下のようになった。もし問題があれば以下の値に置換する
     event_name_1       30
@@ -282,10 +281,10 @@ def create_model(lr=0.002):
     event_type_2        2
     '''
 
-    event_name_1_emb = Flatten()(Embedding(32, 1)(event_name_1_input))
-    event_type_1_emb = Flatten()(Embedding(6, 1)(event_type_1_input))
-    event_name_2_emb = Flatten()(Embedding(6, 1)(event_name_2_input))
-    event_type_2_emb = Flatten()(Embedding(6, 1)(event_type_2_input))
+    event_name_1_emb = Flatten()(Embedding(31, 1)(event_name_1_input))
+    event_type_1_emb = Flatten()(Embedding(5, 1)(event_type_1_input))
+    event_name_2_emb = Flatten()(Embedding(5, 1)(event_name_2_input))
+    event_type_2_emb = Flatten()(Embedding(5, 1)(event_type_2_input))
 
     item_id_emb = Flatten()(Embedding(3049, 3)(item_id_input))
     dept_id_emb = Flatten()(Embedding(7, 1)(dept_id_input))
