@@ -5,7 +5,7 @@ import os, sys, gc, time, warnings, pickle, psutil, random
 from tqdm import tqdm
 from multiprocessing import Pool
 from utils import setup_logger
-rom sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
 ########################### logger
@@ -54,7 +54,7 @@ def get_data_by_store(store):
     features = [col for col in list(df) if col not in remove_features]
     df = df[['id','d',TARGET]+features]
 
-    #preprocessing for cat_emb cat_cols
+    #preprocessing for cat_cols
     for col in cat_cols:
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col].cat.codes)
@@ -125,10 +125,6 @@ mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
                 'enc_store_id_dept_id_std', 'enc_item_id_mean', 'enc_item_id_std',
                 'enc_item_id_state_id_mean', 'enc_item_id_state_id_std',
                 'enc_item_id_store_id_mean', 'enc_item_id_store_id_std']
-
-
-
-
 
 ############################## cat_embの設定 ################################
 #cat_id_cols = ["item_id", "dept_id", "store_id", "cat_id", "state_id"]
@@ -359,16 +355,6 @@ for store_id in STORES_IDS:
     valid_mask = train_mask&(grid_df['d']>(END_TRAIN-P_HORIZON))
     preds_mask = grid_df['d']>(END_TRAIN-100)
     
-    '''
-    train_data = lgb.Dataset(grid_df[train_mask][features_columns], 
-                       label=grid_df[train_mask][TARGET])
-    train_data.save_binary('train_data.bin')
-    train_data = lgb.Dataset('train_data.bin')
-    
-    valid_data = lgb.Dataset(grid_df[valid_mask][features_columns], 
-                       label=grid_df[valid_mask][TARGET])
-    '''
-
     logger.info('start make datasets (X_train, y_train, valid)')
 
     X_train = make_X(grid_df[train_mask][features_columns])
@@ -378,8 +364,6 @@ for store_id in STORES_IDS:
     logger.info(f'X_train shape: {X_train.keys()}')
     logger.info(f'y_train shape: {y_train.shape}')
 
-    # Saving part of the dataset for later predictions
-    # Removing features that we need to calculate recursively 
     grid_df = grid_df[preds_mask].reset_index(drop=True)
     keep_cols = [col for col in list(grid_df) if '_tmp_' not in col]
     grid_df = grid_df[keep_cols]
@@ -390,16 +374,7 @@ for store_id in STORES_IDS:
     del grid_df
     
     seed_everything(SEED)
-    '''
-    estimator = lgb.train(lgb_params,
-                          train_data,
-                          valid_sets = [valid_data],
-                          verbose_eval = 100,
-                          )
-    
-    model_name = 'lgb_model_'+store_id+'_v'+str(VER)+'.bin'
-    pickle.dump(estimator, open(model_name, 'wb'))
-    '''
+
     estimator = create_model(lr=0.002)
     estimator.summary()
     logger.info(estimator.summary())
@@ -416,9 +391,6 @@ for store_id in STORES_IDS:
     model_name = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5'
     estimator.save(model_name)
 
-    #!rm train_data.bin
-    #os.remove('train_data.bin')
-    #del train_data, valid_data, estimator
     del X_train, y_train, estimator
     gc.collect()
     

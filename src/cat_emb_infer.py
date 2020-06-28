@@ -121,8 +121,6 @@ mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
 
 
 
-
-
 ############################## cat_embの設定 ################################
 #cat_id_cols = ["item_id", "dept_id", "store_id", "cat_id", "state_id"]
 cat_id_cols = ["item_id", "dept_id", "cat_id"]
@@ -341,74 +339,6 @@ def create_model(lr=0.002):
     return model
 
 
-########################### Train Models
-#################################################################################
-'''
-for store_id in STORES_IDS:
-    logger.info(f'start train {store_id}')
-    
-    # Get grid for current store
-    grid_df, features_columns = get_data_by_store(store_id)
-    logger.info(f'grid_df shape: {grid_df.shape}')
-    logger.info(f'features: {features_columns}')
-
-    # cat_emb用のfillna処理
-    for i, v in tqdm(enumerate(num_cols)):
-        grid_df[v] = grid_df[v].fillna(grid_df[v].median())
-    logger.info(f'num_cols: {num_cols}')
-    
-    train_mask = grid_df['d']<=END_TRAIN
-    valid_mask = train_mask&(grid_df['d']>(END_TRAIN-P_HORIZON))
-    preds_mask = grid_df['d']>(END_TRAIN-100)
-    
-
-    logger.info('start make datasets (X_train, y_train, valid)')
-
-    X_train = make_X(grid_df[train_mask][features_columns])
-    y_train = np.asarray(grid_df[train_mask][TARGET])#.to_numpy()
-    valid = (make_X(grid_df[valid_mask][features_columns]), np.asarray(grid_df[valid_mask][TARGET]))
-
-    logger.info(f'X_train shape: {X_train.keys()}')
-    logger.info(f'y_train shape: {y_train.shape}')
-
-    # Saving part of the dataset for later predictions
-    # Removing features that we need to calculate recursively 
-    grid_df = grid_df[preds_mask].reset_index(drop=True)
-    keep_cols = [col for col in list(grid_df) if '_tmp_' not in col]
-    grid_df = grid_df[keep_cols]
-    grid_df.to_pickle('../data/output/test_'+store_id+'.pkl')
-
-    logger.info(f'keep_cols: {keep_cols}')    
-    logger.info(f'grid_df[preds_mask]: {grid_df.shape}')
-    del grid_df
-    
-    seed_everything(SEED)
-    estimator = create_model(lr=0.002)
-    estimator.summary()
-    logger.info(estimator.summary())
-
-    #X_trainは辞書
-    history = estimator.fit(X_train, 
-                    y_train,
-                    batch_size=2 ** 14,
-                    epochs=70,
-                    #shuffleはどうするのか?
-                    shuffle=True,
-                    validation_data=valid)
-
-    model_name = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5'
-    estimator.save(model_name)
-
-    #!rm train_data.bin
-    #os.remove('train_data.bin')
-    #del train_data, valid_data, estimator
-    del X_train, y_train, estimator
-    gc.collect()
-    
-    # "Keep" models features for predictions
-    MODEL_FEATURES = features_columns
-    logger.info(f'keep features without _tmp_ : {MODEL_FEATURES}')
-'''
 ########################### Predict
 #################################################################################
 MODEL_FEATURES = ['item_id', 'dept_id', 'cat_id', 'release', 'sell_price', 'price_max', 'price_min', 'price_std', 'price_mean', 'price_norm', 'price_nunique', 'item_nunique', 'price_momentum', 'price_momentum_m', 'price_momentum_y', 'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 'snap_CA', 'snap_TX', 'snap_WI', 'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end', 'enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean', 'enc_store_id_std', 'enc_cat_id_mean', 'enc_cat_id_std', 'enc_dept_id_mean', 'enc_dept_id_std', 'enc_state_id_cat_id_mean', 'enc_state_id_cat_id_std', 'enc_state_id_dept_id_mean', 'enc_state_id_dept_id_std', 'enc_store_id_cat_id_mean', 'enc_store_id_cat_id_std', 'enc_store_id_dept_id_mean', 'enc_store_id_dept_id_std', 'enc_item_id_mean', 'enc_item_id_std', 'enc_item_id_state_id_mean', 'enc_item_id_state_id_std', 'enc_item_id_store_id_mean', 'enc_item_id_store_id_std', 'sales_lag_28', 'sales_lag_29', 'sales_lag_30', 'sales_lag_31', 'sales_lag_32', 'sales_lag_33', 'sales_lag_34', 'sales_lag_35', 'sales_lag_36', 'sales_lag_37', 'sales_lag_38', 'sales_lag_39', 'sales_lag_40', 'sales_lag_41', 'sales_lag_42', 'rolling_mean_7', 'rolling_std_7', 'rolling_mean_14', 'rolling_std_14', 'rolling_mean_30', 'rolling_std_30', 'rolling_mean_60', 'rolling_std_60', 'rolling_mean_180', 'rolling_std_180', 'rolling_mean_tmp_1_7', 'rolling_mean_tmp_1_14', 'rolling_mean_tmp_1_30', 'rolling_mean_tmp_1_60', 'rolling_mean_tmp_7_7', 'rolling_mean_tmp_7_14', 'rolling_mean_tmp_7_30', 'rolling_mean_tmp_7_60', 'rolling_mean_tmp_14_7', 'rolling_mean_tmp_14_14', 'rolling_mean_tmp_14_30', 'rolling_mean_tmp_14_60']
