@@ -54,6 +54,8 @@ def get_data_by_store(store):
     df = df[['id','d',TARGET]+features]
     
     df = df[df['d']>=START_TRAIN].reset_index(drop=True)
+    ################################3
+    print(df.info())
     
     return df, features
 
@@ -188,9 +190,25 @@ from tensorflow.keras.models import Model
 #辞書型にして、catとnumのカラムをmodelに教える
 #コードに問題がないことを確認したらstandard scalerを追加する。
 def make_X(df):
+    cat_type_list = ['item_id','dept_id','cat_id']
+    include_minus = ['event_name_1','event_name_2','event_type_1','event_type_2']#,'snap_CA', 'snap_TX', 'snap_WI']
+    bool_type_list = ['snap_CA', 'snap_TX', 'snap_WI']
+    for bl in bool_type_list:
+        df[bl] = df[bl].astype(np.int)
     X = {"dense1": df[dense_cols].to_numpy()}
     for i, v in enumerate(cat_cols):
-        X[v] = df[[v]].to_numpy()
+        if v in cat_type_list:
+            temp = np.asarray(df[v].cat.codes)
+            X[v] = np.expand_dims(temp, -1)
+        elif v in include_minus:
+            temp = np.asarray(df[v].cat.codes)
+            temp = temp+1
+            X[v] = np.expand_dims(temp, -1)
+        else:
+            X[v] = df[[v]].to_numpy()
+        #X[v] = np.asarray(df[[v]].cat.codes)#.astype(np.int16)
+        #temp = np.asarray(df[v].astype(np.int16))#.astype(np.int16)
+        #X[v] = np.expand_dims(temp, -1)
     return X
 
 #cat_cols = ['release', 'price_nunique', 'item_nunique', 
@@ -234,16 +252,28 @@ def create_model(lr=0.002):
     #wday_emb = Flatten()(Embedding(7, 1)(wday_input))
     #month_emb = Flatten()(Embedding(12, 1)(month_input))
     #year_emb = Flatten()(Embedding(6, 1)(year_input))
+    '''
     release_emb = Flatten()(Embedding(259,3)(release_input))
-    price_nunique_emb = Flatten(Embedding(20,1)(price_nunique_input))
-    item_nunique_emb = Flatten(Embedding(184, 3)(item_nunique_input))
-    tm_d_emb = Flatten(Embedding(31,1)(tm_d_input))
-    tm_w_emb = Flatten(Embedding(53,1)(tm_w_input))
-    tm_m_emb = Flatten(Embedding(12,1)(tm_m_input))
-    tm_y_emb = Flatten(Embedding(6,1)(tm_y_input))
-    tm_wm_emb = Flatten(Embedding(5,1)(tm_wm_input))
-    tm_dw_emb = Flatten(Embedding(7,1)(tm_dw_input))
-    tm_w_end_emb = Flatten(Embedding(2,1)(tm_w_end_input))
+    price_nunique_emb = Flatten()(Embedding(20,1)(price_nunique_input))
+    item_nunique_emb = Flatten()(Embedding(184, 3)(item_nunique_input))
+    tm_d_emb = Flatten()(Embedding(31,1)(tm_d_input))
+    tm_w_emb = Flatten()(Embedding(53,1)(tm_w_input))
+    tm_m_emb = Flatten()(Embedding(12,1)(tm_m_input))
+    tm_y_emb = Flatten()(Embedding(6,1)(tm_y_input))
+    tm_wm_emb = Flatten()(Embedding(5,1)(tm_wm_input))
+    tm_dw_emb = Flatten()(Embedding(7,1)(tm_dw_input))
+    tm_w_end_emb = Flatten()(Embedding(2,1)(tm_w_end_input))
+    '''
+    release_emb = Flatten()(Embedding(503,3)(release_input))
+    price_nunique_emb = Flatten()(Embedding(21,1)(price_nunique_input))
+    item_nunique_emb = Flatten()(Embedding(305, 3)(item_nunique_input))
+    tm_d_emb = Flatten()(Embedding(32,1)(tm_d_input))
+    tm_w_emb = Flatten()(Embedding(54,1)(tm_w_input))
+    tm_m_emb = Flatten()(Embedding(13,1)(tm_m_input))
+    tm_y_emb = Flatten()(Embedding(6,1)(tm_y_input))
+    tm_wm_emb = Flatten()(Embedding(6,1)(tm_wm_input))
+    tm_dw_emb = Flatten()(Embedding(7,1)(tm_dw_input))
+    tm_w_end_emb = Flatten()(Embedding(2,1)(tm_w_end_input))
 
     '''nunique()の結果は以下のようになった。もし問題があれば以下の値に置換する
     event_name_1       30
@@ -252,10 +282,10 @@ def create_model(lr=0.002):
     event_type_2        2
     '''
 
-    event_name_1_emb = Flatten()(Embedding(31, 1)(event_name_1_input))
-    event_type_1_emb = Flatten()(Embedding(5, 1)(event_type_1_input))
-    event_name_2_emb = Flatten()(Embedding(5, 1)(event_name_2_input))
-    event_type_2_emb = Flatten()(Embedding(5, 1)(event_type_2_input))
+    event_name_1_emb = Flatten()(Embedding(32, 1)(event_name_1_input))
+    event_type_1_emb = Flatten()(Embedding(6, 1)(event_type_1_input))
+    event_name_2_emb = Flatten()(Embedding(6, 1)(event_name_2_input))
+    event_type_2_emb = Flatten()(Embedding(6, 1)(event_type_2_input))
 
     item_id_emb = Flatten()(Embedding(3049, 3)(item_id_input))
     dept_id_emb = Flatten()(Embedding(7, 1)(dept_id_input))
@@ -297,7 +327,7 @@ def create_model(lr=0.002):
     #おそらく以下のdictでcolumn明からInputを判断する。
     inputs = {"dense1": dense_input, 
               "release": release_input, "price_nunique": price_nunique_input, "item_nunique": item_nunique_input,
-              "tm_d": tm_d_input, "tm_w": tm_w_end_input, "tm_m": tm_m_input, "tm_y": tm_y_input,
+              "tm_d": tm_d_input, "tm_w": tm_w_input, "tm_m": tm_m_input, "tm_y": tm_y_input,
               "tm_wm": tm_wm_input, "tm_dw": tm_dw_input, "tm_w_end": tm_w_end_input,
               "event_name_1": event_name_1_input, "event_type_1": event_type_1_input,
               "event_name_2": event_name_2_input, "event_type_2": event_type_2_input,
@@ -343,8 +373,8 @@ for store_id in STORES_IDS:
     logger.info('start make datasets (X_train, y_train, valid)')
 
     X_train = make_X(grid_df[train_mask][features_columns])
-    y_train = grid_df[train_mask][TARGET]
-    valid = (make_X(grid_df[valid_mask][features_columns]), grid_df[valid_mask][TARGET])
+    y_train = np.asarray(grid_df[train_mask][TARGET])#.to_numpy()
+    valid = (make_X(grid_df[valid_mask][features_columns]), np.asarray(grid_df[valid_mask][TARGET]))
 
     logger.info(f'X_train shape: {X_train.keys()}')
     logger.info(f'y_train shape: {y_train.shape}')
