@@ -119,18 +119,15 @@ TARGET      = 'sales'            # Our target
 START_TRAIN = 0                  # We can skip some rows (Nans/faster training)
 END_TRAIN   = 1913               # End day of our train set
 P_HORIZON   = 28                 # Prediction horizon
-#USE_AUX     = False              # Use or not pretrained models
 
-#FEATURES to remove
-## These features lead to overfit
-## or values not present in test set
 remove_features = ['id','state_id','store_id',
                    'date','wm_yr_wk','d',TARGET]
-'''                   
-mean_features   = ['enc_cat_id_mean','enc_cat_id_std',
-                   'enc_dept_id_mean','enc_dept_id_std',
-                   'enc_item_id_mean','enc_item_id_std'] 
-'''
+#過学習の恐れがあるから
+unuse_recursive_cols = ['sales_lag_29', 'sales_lag_30', 'sales_lag_31', 'sales_lag_32', 'sales_lag_33', 
+                        'sales_lag_34', 'sales_lag_36', 'sales_lag_37', 'sales_lag_38', 'sales_lag_39', 
+                        'sales_lag_40', 'sales_lag_41', 'rolling_mean_tmp_1_7', 'rolling_mean_tmp_1_14', 
+                        'rolling_mean_tmp_1_30', 'rolling_mean_tmp_7_7', 'rolling_mean_tmp_7_14']
+remove_features = remove_features + unuse_recursive_cols
 mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
                 'enc_store_id_std', 'enc_cat_id_mean', 'enc_cat_id_std',
                 'enc_dept_id_mean', 'enc_dept_id_std', 'enc_state_id_cat_id_mean',
