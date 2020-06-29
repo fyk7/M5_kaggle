@@ -106,6 +106,11 @@ P_HORIZON   = 28                 # Prediction horizon
 ############################## defaultの設定 ################################
 remove_features = ['id','state_id','store_id'#,'price_nunique', 'item_nunique',
                    'date','wm_yr_wk','d',TARGET]
+unuse_recursive_cols = ['sales_lag_29', 'sales_lag_30', 'sales_lag_31', 'sales_lag_32', 'sales_lag_33', 
+                        'sales_lag_34', 'sales_lag_36', 'sales_lag_37', 'sales_lag_38', 'sales_lag_39', 
+                        'sales_lag_40', 'sales_lag_41', 'rolling_mean_tmp_1_7', 'rolling_mean_tmp_1_14', 
+                        'rolling_mean_tmp_1_30', 'rolling_mean_tmp_7_7', 'rolling_mean_tmp_7_14']
+remove_features = remove_features + unuse_recursive_cols
 
 mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
                 'enc_store_id_std', 'enc_cat_id_mean', 'enc_cat_id_std',
