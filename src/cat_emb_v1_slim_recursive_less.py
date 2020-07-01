@@ -104,7 +104,7 @@ END_TRAIN   = 1913               # End day of our train set
 P_HORIZON   = 28                 # Prediction horizon
 
 ############################## defaultの設定 ################################
-remove_features = ['id','state_id','store_id'#,'price_nunique', 'item_nunique',
+remove_features = ['id','state_id','store_id',#,'price_nunique', 'item_nunique',
                    'date','wm_yr_wk','d',TARGET]
 unuse_recursive_cols = ['sales_lag_29', 'sales_lag_30', 'sales_lag_31', 'sales_lag_32', 'sales_lag_33', 
                         'sales_lag_34', 'sales_lag_36', 'sales_lag_37', 'sales_lag_38', 'sales_lag_39', 
@@ -144,6 +144,7 @@ num_cols = ['release', 'sell_price', 'price_max', 'price_min', 'price_std', 'pri
             'rolling_mean_tmp_7_7', 'rolling_mean_tmp_7_14', 'rolling_mean_tmp_7_30', 
             'rolling_mean_tmp_7_60', 'rolling_mean_tmp_14_7', 'rolling_mean_tmp_14_14', 'rolling_mean_tmp_14_30', 
             'rolling_mean_tmp_14_60']
+num_cols = [col for col in num_cols if col not in remove_features]
 bool_cols = ['snap_CA', 'snap_TX', 'snap_WI']
 dense_cols = num_cols + bool_cols
 
