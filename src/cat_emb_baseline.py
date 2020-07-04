@@ -124,15 +124,12 @@ mean_features = ['enc_state_id_mean', 'enc_state_id_std', 'enc_store_id_mean',
 
 
 ############################## cat_embの設定 ################################
-#cat_id_cols = ["item_id", "dept_id", "store_id", "cat_id", "state_id"]
 cat_id_cols = ["item_id", "dept_id", "cat_id"]
-#cat_cols = cat_id_cols + ["wday", "month", "year", "event_name_1", 
-#                          "event_type_1", "event_name_2", "event_type_2"]
 cat_cols = ['release', 'price_nunique', 'item_nunique', 
             'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 
             'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
-
 cat_cols = cat_id_cols + cat_cols
+
 num_cols = ['release', 'sell_price', 'price_max', 'price_min', 'price_std', 'price_mean', 
             'price_norm', 'price_nunique', 'item_nunique', 'price_momentum', 'price_momentum_m', 'price_momentum_y', 
             #enc_ids
@@ -206,14 +203,7 @@ def make_X(df):
             X[v] = np.expand_dims(temp, -1)
         else:
             X[v] = df[[v]].to_numpy()
-        #X[v] = np.asarray(df[[v]].cat.codes)#.astype(np.int16)
-        #temp = np.asarray(df[v].astype(np.int16))#.astype(np.int16)
-        #X[v] = np.expand_dims(temp, -1)
     return X
-
-#cat_cols = ['release', 'price_nunique', 'item_nunique', 
-#            'event_name_1', 'event_type_1', 'event_name_2', 'event_type_2', 
-#            'tm_d', 'tm_w', 'tm_m', 'tm_y', 'tm_wm', 'tm_dw', 'tm_w_end']
 
 #storeとstateは限定されているから、このモデルでは使用しない。
 def create_model(lr=0.002):
@@ -223,11 +213,6 @@ def create_model(lr=0.002):
     # 数値cols
     dense_input = Input(shape=(len(dense_cols), ), name='dense1')
 
-    # Embedding input
-    # cat_cols
-    #wday_input = Input(shape=(1,), name='wday')
-    #month_input = Input(shape=(1,), name='month')
-    #year_input = Input(shape=(1,), name='year')
     release_input = Input(shape=(1,), name='release')
     price_nunique_input = Input(shape=(1,), name='price_nunique')
     item_nunique_input = Input(shape=(1,), name='item_nunique')
@@ -245,25 +230,8 @@ def create_model(lr=0.002):
     event_type_2_input = Input(shape=(1,), name='event_type_2')
     item_id_input = Input(shape=(1,), name='item_id')
     dept_id_input = Input(shape=(1,), name='dept_id')
-    #store_id_input = Input(shape=(1,), name='store_id')
     cat_id_input = Input(shape=(1,), name='cat_id')
-    #state_id_input = Input(shape=(1,), name='state_id')
 
-    #wday_emb = Flatten()(Embedding(7, 1)(wday_input))
-    #month_emb = Flatten()(Embedding(12, 1)(month_input))
-    #year_emb = Flatten()(Embedding(6, 1)(year_input))
-    '''
-    release_emb = Flatten()(Embedding(259,3)(release_input))
-    price_nunique_emb = Flatten()(Embedding(20,1)(price_nunique_input))
-    item_nunique_emb = Flatten()(Embedding(184, 3)(item_nunique_input))
-    tm_d_emb = Flatten()(Embedding(31,1)(tm_d_input))
-    tm_w_emb = Flatten()(Embedding(53,1)(tm_w_input))
-    tm_m_emb = Flatten()(Embedding(12,1)(tm_m_input))
-    tm_y_emb = Flatten()(Embedding(6,1)(tm_y_input))
-    tm_wm_emb = Flatten()(Embedding(5,1)(tm_wm_input))
-    tm_dw_emb = Flatten()(Embedding(7,1)(tm_dw_input))
-    tm_w_end_emb = Flatten()(Embedding(2,1)(tm_w_end_input))
-    '''
     release_emb = Flatten()(Embedding(503,3)(release_input))
     price_nunique_emb = Flatten()(Embedding(22,1)(price_nunique_input))
     item_nunique_emb = Flatten()(Embedding(306, 3)(item_nunique_input))
@@ -275,13 +243,6 @@ def create_model(lr=0.002):
     tm_dw_emb = Flatten()(Embedding(7,1)(tm_dw_input))
     tm_w_end_emb = Flatten()(Embedding(2,1)(tm_w_end_input))
 
-    '''nunique()の結果は以下のようになった。もし問題があれば以下の値に置換する
-    event_name_1       30
-    event_type_1        4
-    event_name_2        4
-    event_type_2        2
-    '''
-
     event_name_1_emb = Flatten()(Embedding(32, 1)(event_name_1_input))
     event_type_1_emb = Flatten()(Embedding(6, 1)(event_type_1_input))
     event_name_2_emb = Flatten()(Embedding(6, 1)(event_name_2_input))
@@ -289,18 +250,8 @@ def create_model(lr=0.002):
 
     item_id_emb = Flatten()(Embedding(3049, 3)(item_id_input))
     dept_id_emb = Flatten()(Embedding(7, 1)(dept_id_input))
-    #store_id_emb = Flatten()(Embedding(10, 1)(store_id_input))
     cat_id_emb = Flatten()(Embedding(3, 1)(cat_id_input))
-    #state_id_emb = Flatten()(Embedding(3, 1)(state_id_input))
 
-    # Combine dense and embedding parts and add dense layers. Exit on linear scale.
-    '''
-    x = concatenate([dense_input, wday_emb, month_emb, year_emb, 
-                     event_name_1_emb, event_type_1_emb, 
-                     event_name_2_emb, event_type_2_emb, 
-                     item_id_emb, dept_id_emb, cat_id_emb,
-                     store_id_emb, state_id_emb])
-    '''
     x = concatenate([dense_input,
                      release_emb, price_nunique_emb, item_nunique_emb,
                      tm_d_emb, tm_w_emb, tm_m_emb, tm_y_emb, tm_wm_emb, tm_dw_emb, tm_w_end_emb,
@@ -316,14 +267,6 @@ def create_model(lr=0.002):
 
     outputs = Dense(1, activation="linear", name='output')(x)
 
-    #column名とそのcolumnが入るInput layer
-    '''
-    inputs = {"dense1": dense_input, "wday": wday_input, "month": month_input, "year": year_input, 
-              "event_name_1": event_name_1_input, "event_type_1": event_type_1_input,
-              "event_name_2": event_name_2_input, "event_type_2": event_type_2_input,
-              "item_id": item_id_input, "dept_id": dept_id_input, "store_id": store_id_input, 
-              "cat_id": cat_id_input, "state_id": state_id_input}
-    '''
     #おそらく以下のdictでcolumn明からInputを判断する。
     inputs = {"dense1": dense_input, 
               "release": release_input, "price_nunique": price_nunique_input, "item_nunique": item_nunique_input,
@@ -360,16 +303,6 @@ for store_id in STORES_IDS:
     valid_mask = train_mask&(grid_df['d']>(END_TRAIN-P_HORIZON))
     preds_mask = grid_df['d']>(END_TRAIN-100)
     
-    '''
-    train_data = lgb.Dataset(grid_df[train_mask][features_columns], 
-                       label=grid_df[train_mask][TARGET])
-    train_data.save_binary('train_data.bin')
-    train_data = lgb.Dataset('train_data.bin')
-    
-    valid_data = lgb.Dataset(grid_df[valid_mask][features_columns], 
-                       label=grid_df[valid_mask][TARGET])
-    '''
-
     logger.info('start make datasets (X_train, y_train, valid)')
 
     X_train = make_X(grid_df[train_mask][features_columns])
@@ -379,8 +312,6 @@ for store_id in STORES_IDS:
     logger.info(f'X_train shape: {X_train.keys()}')
     logger.info(f'y_train shape: {y_train.shape}')
 
-    # Saving part of the dataset for later predictions
-    # Removing features that we need to calculate recursively 
     grid_df = grid_df[preds_mask].reset_index(drop=True)
     keep_cols = [col for col in list(grid_df) if '_tmp_' not in col]
     grid_df = grid_df[keep_cols]
@@ -391,16 +322,7 @@ for store_id in STORES_IDS:
     del grid_df
     
     seed_everything(SEED)
-    '''
-    estimator = lgb.train(lgb_params,
-                          train_data,
-                          valid_sets = [valid_data],
-                          verbose_eval = 100,
-                          )
-    
-    model_name = 'lgb_model_'+store_id+'_v'+str(VER)+'.bin'
-    pickle.dump(estimator, open(model_name, 'wb'))
-    '''
+
     estimator = create_model(lr=0.002)
     estimator.summary()
     logger.info(estimator.summary())
@@ -417,13 +339,9 @@ for store_id in STORES_IDS:
     model_name = '../data/output/cat_emb_model_'+store_id+'_v'+str(VER)+'.h5'
     estimator.save(model_name)
 
-    #!rm train_data.bin
-    #os.remove('train_data.bin')
-    #del train_data, valid_data, estimator
     del X_train, y_train, estimator
     gc.collect()
     
-    # "Keep" models features for predictions
     MODEL_FEATURES = features_columns
     logger.info(f'keep features without _tmp_ : {MODEL_FEATURES}')
 
